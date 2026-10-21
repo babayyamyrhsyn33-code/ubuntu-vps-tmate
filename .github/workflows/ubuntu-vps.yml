@@ -1,14 +1,48 @@
-name: Ubuntu VPS
+name: Ubuntu VPS (Advanced)
 
 on:
   workflow_dispatch:
+    inputs:
+      timeout_hours:
+        description: 'How many hours to keep the session alive'
+        required: false
+        default: '6'
+        type: choice
+        options:
+          - '1'
+          - '2'
+          - '3'
+          - '6'
+          - '12'
 
 jobs:
   vps:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 720
+    
     steps:
-      - name: Start SSH Session
+      - name: 🛠️ System Preparation
+        run: |
+          echo "========================================"
+          echo "  Advanced Ubuntu VPS - Starting up"
+          echo "========================================"
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq curl wget htop neofetch tmux git nano vim > /dev/null
+          echo "✅ System tools installed"
+
+      - name: 🚀 Start Advanced tmate Session
         uses: mxschmitt/action-tmate@v3
         with:
           sudo: true
+          limit-access-to-actor: true
+          detached: true
+          connect-timeout-seconds: 180
+        env:
+          TMATE_SERVER: "ssh.tmate.io"
+
+      - name: 💤 Keep session alive
+        if: always()
+        run: |
+          echo "Session is running. Waiting..."
+          # This step never actually runs because tmate blocks, but good for structure
+          sleep infinity
