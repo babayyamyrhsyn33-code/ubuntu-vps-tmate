@@ -1,4 +1,4 @@
-name: Ubuntu VPS (Advanced)
+name: Ubuntu VPS Manual
 
 on:
   workflow_dispatch:
@@ -9,17 +9,55 @@ jobs:
     timeout-minutes: 360
 
     steps:
-      - name: System Preparation
+      - name: Prepare System
         run: |
-          echo "========================================"
-          echo "  Advanced Ubuntu VPS - Starting up"
-          echo "========================================"
+          echo "=============================================="
+          echo "   Ubuntu VPS - Manual tmate Setup"
+          echo "=============================================="
           sudo apt-get update -qq
-          sudo apt-get install -y -qq curl wget htop neofetch tmux git nano vim > /dev/null
-          echo "System tools installed"
+          sudo apt-get install -y -qq curl wget openssh-client > /dev/null
+          echo "✅ Base packages ready"
+
+      - name: Install tmate
+        run: |
+          echo "Installing latest tmate..."
+          curl -fsSL https://github.com/tmate-io/tmate/releases/download/2.4.0/tmate-2.4.0-static-linux-amd64.tar.xz -o tmate.tar.xz
+          tar -xf tmate.tar.xz
+          sudo mv tmate-2.4.0-static-linux-amd64/tmate /usr/local/bin/
+          sudo chmod +x /usr/local/bin/tmate
+          tmate -V
+          echo "✅ tmate installed successfully"
 
       - name: Start tmate Session
-        uses: mxschmitt/action-tmate@v3
-        with:
-          sudo: true
-          detached: true
+        run: |
+          echo ""
+          echo "=============================================="
+          echo "   Starting tmate session..."
+          echo "   Wait for SSH connection info below"
+          echo "=============================================="
+          echo ""
+          
+          # Start tmate in background and wait for it to be ready
+          tmate -S /tmp/tmate.sock new-session -d
+          tmate -S /tmp/tmate.sock wait tmate-ready
+          
+          echo ""
+          echo "🔗 SSH Connection:"
+          tmate -S /tmp/tmate.sock display -p '#{tmate_ssh}'
+          echo ""
+          echo "🌐 Web Session:"
+          tmate -S /tmp/tmate.sock display -p '#{tmate_web}'
+          echo ""
+          echo "=============================================="
+          echo "   Session is LIVE - Connect now!"
+          echo "   This will stay open for several hours"
+          echo "=============================================="
+          
+          # Keep the session alive
+          while true; do
+            sleep 60
+            if ! tmate -S /tmp/tmate.sock has-session 2>/dev/null; then
+              echo "Session ended"
+              break
+            fi
+          done
